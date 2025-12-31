@@ -14,7 +14,7 @@ export const colors = {
   year: '#2b79ff',             // Bright blue for year
   month: '#2b79ff',            // Bright blue for month
   day: '#000000',              // Black for day number
-  dayNewYear: '#c41e3a',       // Traditional red for Jan 1
+  // dayNewYear: '#c41e3a',       // Commented out - was causing glitches
   
   // UI elements
   instructionText: '#666666',  // Gray instruction text
@@ -126,7 +126,7 @@ export const japaneseStyle = {
   // Traditional color names (for reference)
   shirokuchiba: '#f5f0e6',     // Natural paper white
   sumi: '#1c1c1c',             // Ink black
-  beni: '#c41e3a',             // Traditional red
+  // beni: '#c41e3a',             // Commented out - was causing glitches
   ai: '#2b79ff',               // Indigo blue (modernized)
   
   // Paper texture parameters

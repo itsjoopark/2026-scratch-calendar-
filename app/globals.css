@@ -12,7 +12,7 @@
   --color-year: #2b79ff;
   --color-month: #2b79ff;
   --color-day: #000000;
-  --color-day-newyear: #c41e3a;
+  /* --color-day-newyear: #c41e3a; */ /* Commented out - was causing glitches */
   --color-instruction: #666666;
   
   /* Typography */

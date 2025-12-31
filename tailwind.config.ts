@@ -15,7 +15,7 @@ const config: Config = {
         bind: '#d9d6d6',
         'accent-blue': '#2b79ff',
         'day-black': '#000000',
-        'new-year-red': '#c41e3a',
+        // 'new-year-red': '#c41e3a', // Commented out - was causing glitches
         instruction: '#666666',
         
         // Paper texture colors

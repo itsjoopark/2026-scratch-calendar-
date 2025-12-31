@@ -234,7 +234,8 @@ export class CalendarScene {
     ctx.textBaseline = 'top';
     ctx.fillText(String(date.year), width / 2, contentTop);
     
-    ctx.fillStyle = date.isNewYear ? '#c41e3a' : '#000000';
+    // Always black - red was causing glitches
+    ctx.fillStyle = '#000000';
     ctx.font = 'italic 400px "Instrument Serif", Georgia, serif';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(date.day), width / 2, height * 0.47);
