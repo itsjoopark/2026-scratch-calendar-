@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { PaperTear, CalendarDate } from './paper-tear';
 import { Fireworks } from './fireworks';
+import { SoundManager } from './sound-manager';
 
 // Month names for date generation
 const MONTH_NAMES = [
@@ -44,6 +45,7 @@ export class CalendarScene {
   private backgroundPage: THREE.Mesh;
   private paperTextureImage: HTMLImageElement | null = null;
   private fireworks: Fireworks;
+  private soundManager: SoundManager;
   
   private dates: CalendarDate[];
   private currentIndex = 0;
@@ -133,6 +135,9 @@ export class CalendarScene {
     
     // Create fireworks system (full-screen, separate canvas)
     this.fireworks = new Fireworks();
+    
+    // Create sound manager for tear sound effects
+    this.soundManager = new SoundManager();
     
     // Setup event listeners
     this.setupEvents();
@@ -391,6 +396,9 @@ export class CalendarScene {
   private handleTearComplete(): void {
     console.log('Tear complete!');
     
+    // Play paper tear sound effect (cycles through 7 sounds)
+    this.soundManager.playTearSound();
+    
     // Check if at last page (Jan 1, 2026)
     if (this.currentIndex >= this.dates.length - 1) {
       console.log('Already at final date: January 1, 2026!');
@@ -465,6 +473,7 @@ export class CalendarScene {
     
     this.paperTear.dispose();
     this.fireworks.dispose();
+    this.soundManager.dispose();
     
     const bgMaterial = this.backgroundPage.material as THREE.MeshBasicMaterial;
     bgMaterial.map?.dispose();

@@ -21,8 +21,9 @@ export const fireworkFragmentShader = `
   
   varying vec2 vUv;
   
-  #define NUM_EXPLOSIONS 8.0
+  #define NUM_EXPLOSIONS 12.0
   #define NUM_PARTICLES 100.0
+  #define TOTAL_DURATION 17.76
   
   // Hash function for pseudo-random values
   vec2 Hash12(float t) {
@@ -62,8 +63,8 @@ export const fireworkFragmentShader = `
       // Sparkle/twinkle effect
       brightness *= sin(t * 20.0 + i) * 0.5 + 0.5;
       
-      // Fade out over time
-      brightness *= smoothstep(1.0, 0.5, t);
+      // Fade out over time - extended for longer explosions
+      brightness *= smoothstep(3.5, 1.5, t);
       
       // Add spark
       sparks += brightness / dist;
@@ -78,20 +79,20 @@ export const fireworkFragmentShader = `
     
     float elapsed = uTime - uStartTime;
     
-    // Fade in and out
-    float globalFade = smoothstep(0.0, 0.3, elapsed) * smoothstep(10.0, 8.0, elapsed);
+    // Fade in and out - matches sound duration (~17.76s)
+    float globalFade = smoothstep(0.0, 0.3, elapsed) * smoothstep(TOTAL_DURATION, TOTAL_DURATION - 2.5, elapsed);
     
     vec3 col = vec3(0.0);
     
     for (float i = 0.0; i < NUM_EXPLOSIONS; i++) {
-      // Stagger explosion timing
-      float explosionDelay = i * 0.4 + Hash12(i + 0.5).x * 0.3;
+      // Stagger explosion timing - spread across full duration
+      float explosionDelay = i * 1.2 + Hash12(i + 0.5).x * 0.5;
       float t = elapsed - explosionDelay;
       
-      // Only render if explosion has started
-      if (t > 0.0 && t < 2.5) {
+      // Only render if explosion has started - longer lifetime
+      if (t > 0.0 && t < 3.5) {
         // Unique seed for this explosion
-        float seed = floor(elapsed / 3.0) + i;
+        float seed = floor(elapsed / 4.0) + i;
         
         // Random color based on seed
         vec3 color = sin(4.0 * vec3(0.34, 0.54, 0.73) * (seed + i)) * 0.35 + 0.65;

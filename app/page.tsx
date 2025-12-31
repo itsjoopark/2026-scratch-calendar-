@@ -89,6 +89,7 @@ export default function Home() {
           maxHeight: 'calc(100vh - 180px)',
           touchAction: 'none',
           zIndex: 10, // Above fireworks background
+          filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.12))',
         }}
         aria-label="Drag to rip off the page"
       />

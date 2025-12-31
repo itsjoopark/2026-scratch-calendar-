@@ -20,8 +20,12 @@ export class Fireworks {
   
   private isActive = false;
   private startTime = 0;
-  private totalDuration = 10000; // 10 seconds
+  private totalDuration = 17763; // ~17.76 seconds - matches fireworks sound effect duration
   private animationId: number | null = null;
+  
+  // Fireworks sound effect
+  private sound: HTMLAudioElement | null = null;
+  private soundLoaded = false;
   
   constructor() {
     // Create canvas
@@ -57,6 +61,25 @@ export class Fireworks {
     
     // Listen for resize
     window.addEventListener('resize', this.handleResize);
+    
+    // Load fireworks sound effect
+    this.loadSound();
+  }
+  
+  private loadSound(): void {
+    this.sound = new Audio('/assets/sound-files/fireworks-sound-effect.mp3');
+    this.sound.preload = 'auto';
+    this.sound.volume = 0.6; // 60% volume
+    this.sound.loop = false;
+    
+    this.sound.addEventListener('canplaythrough', () => {
+      this.soundLoaded = true;
+      console.log('Fireworks sound loaded');
+    }, { once: true });
+    
+    this.sound.addEventListener('error', (e) => {
+      console.warn('Failed to load fireworks sound:', e);
+    });
   }
   
   private handleResize = (): void => {
@@ -119,6 +142,9 @@ export class Fireworks {
       this.canvas.style.opacity = '0.75';
     });
     
+    // Play fireworks sound effect
+    this.playSound();
+    
     // Start animation loop
     this.animate();
     
@@ -142,11 +168,51 @@ export class Fireworks {
     this.renderer.render(this.scene, this.camera);
   };
   
+  private playSound(): void {
+    if (!this.sound || !this.soundLoaded) {
+      console.log('Fireworks sound not ready');
+      return;
+    }
+    
+    try {
+      this.sound.currentTime = 0;
+      this.sound.volume = 0.6;
+      this.sound.play().then(() => {
+        console.log('🔊 Playing fireworks sound');
+      }).catch((error) => {
+        console.warn('Fireworks sound playback failed:', error);
+      });
+    } catch (error) {
+      console.warn('Error playing fireworks sound:', error);
+    }
+  }
+  
+  private fadeOutSound(): void {
+    if (!this.sound) return;
+    
+    // Gradually fade out the sound over 2 seconds
+    const fadeInterval = setInterval(() => {
+      if (this.sound && this.sound.volume > 0.05) {
+        this.sound.volume = Math.max(0, this.sound.volume - 0.05);
+      } else {
+        clearInterval(fadeInterval);
+        if (this.sound) {
+          this.sound.pause();
+          this.sound.currentTime = 0;
+          this.sound.volume = 0.6; // Reset for next time
+        }
+      }
+    }, 100); // Fade over ~1.2 seconds (12 steps * 100ms)
+  }
+  
   update(): void {
     // Animation handled internally via requestAnimationFrame
   }
   
   cleanup(): void {
+    // Fade out the sound effect
+    this.fadeOutSound();
+    
     // Smooth, gradual fade out over 2.5 seconds with ease-out curve
     this.canvas.style.transition = 'opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1)';
     
@@ -180,6 +246,13 @@ export class Fireworks {
     this.cleanup();
     
     window.removeEventListener('resize', this.handleResize);
+    
+    // Clean up sound
+    if (this.sound) {
+      this.sound.pause();
+      this.sound.src = '';
+      this.sound = null;
+    }
     
     if (this.mesh) {
       this.mesh.geometry.dispose();
