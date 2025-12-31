@@ -36,7 +36,7 @@ export class Fireworks {
       pointer-events: none;
       z-index: 9999;
       opacity: 0;
-      transition: opacity 0.3s ease-in;
+      transition: opacity 0.5s ease-in;
     `;
     
     // Create renderer
@@ -147,9 +147,15 @@ export class Fireworks {
   }
   
   cleanup(): void {
-    // Fade out
-    this.canvas.style.opacity = '0';
+    // Smooth, gradual fade out over 2.5 seconds with ease-out curve
+    this.canvas.style.transition = 'opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1)';
     
+    // Small delay to ensure transition property is applied
+    requestAnimationFrame(() => {
+      this.canvas.style.opacity = '0';
+    });
+    
+    // Wait for the fade transition to complete before removing
     setTimeout(() => {
       // Stop animation
       if (this.animationId) {
@@ -163,7 +169,7 @@ export class Fireworks {
       }
       
       this.isActive = false;
-    }, 500);
+    }, 2700); // Slightly longer than transition duration
   }
   
   isPlaying(): boolean {
