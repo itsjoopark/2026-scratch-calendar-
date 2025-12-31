@@ -254,7 +254,7 @@ export class CalendarScene {
     });
     
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.z = -0.1; // Further behind main paper to prevent z-fighting
+    mesh.position.z = -0.5; // Well behind main paper to prevent clipping during rotation
     
     return mesh;
   }

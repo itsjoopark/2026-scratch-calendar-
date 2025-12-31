@@ -99,7 +99,7 @@ export class PaperTear {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     // Position mesh so pivot point is at the binding location
     this.mesh.position.y = this.pivotOffset;
-    this.mesh.position.z = 0.05;
+    this.mesh.position.z = 0.1; // Above background page
     scene.add(this.mesh);
     
     console.log('PaperTear initialized - rotation-based interaction');
@@ -309,7 +309,7 @@ export class PaperTear {
     // Make the mesh visible again with the new date
     // This shows the NEXT date underneath the detached paper that's falling
     this.mesh.visible = true;
-    this.mesh.position.set(0, this.pivotOffset, 0.05);
+    this.mesh.position.set(0, this.pivotOffset, 0.1);
     this.mesh.rotation.set(0, 0, 0);
   }
   
@@ -324,8 +324,8 @@ export class PaperTear {
     this.velocityHistory = [];
     this.material.opacity = 1;
     
-    // Reset mesh transform
-    this.mesh.position.set(0, this.pivotOffset, 0.05);
+    // Reset mesh transform - z=0.1 to sit slightly above background
+    this.mesh.position.set(0, this.pivotOffset, 0.1);
     this.mesh.rotation.set(0, 0, 0);
     this.mesh.visible = true;
     
@@ -353,8 +353,8 @@ export class PaperTear {
     // Remove detached paper if exists
     this.removeDetachedPaper();
     
-    // Reset mesh transform
-    this.mesh.position.set(0, this.pivotOffset, 0.05);
+    // Reset mesh transform - z=0.1 to sit above background
+    this.mesh.position.set(0, this.pivotOffset, 0.1);
     this.mesh.rotation.set(0, 0, 0);
     this.mesh.visible = true;
   }
@@ -375,6 +375,9 @@ export class PaperTear {
     this.dragStart = { x: screenX, y: screenY };
     this.dragCurrent = { x: screenX, y: screenY };
     this.velocityHistory = [];
+    
+    // Immediately bring paper to front layer when drag starts
+    this.mesh.position.z = 0.5;
     
     console.log('Drag started');
   }
@@ -605,6 +608,12 @@ export class PaperTear {
     this.mesh.rotation.z = this.currentRotation.z;
     this.mesh.position.x = this.currentPosition.x;
     this.mesh.position.y = this.pivotOffset + this.currentPosition.y;
+    
+    // Dynamic z-position: push forward as paper tilts to prevent clipping
+    // More rotation = further forward to stay above background
+    const rotationMagnitude = Math.abs(this.currentRotation.x) + Math.abs(this.currentRotation.z) * 0.5;
+    const targetZ = this.isDragging ? 0.5 + rotationMagnitude * 0.5 : 0.05;
+    this.mesh.position.z += (targetZ - this.mesh.position.z) * t;
   }
   
   intersects(raycaster: THREE.Raycaster): boolean {
