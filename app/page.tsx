@@ -74,7 +74,7 @@ export default function Home() {
     <main 
       className="min-h-screen flex flex-col items-center justify-center overflow-hidden relative"
       style={{ 
-        backgroundImage: 'url(/assets/b012d5fc65ad07e65f9062ab5a105e1382028db9.png)',
+        backgroundImage: 'url(/assets/cfcd3b396bc0770852b310557ced54fe29291984.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
