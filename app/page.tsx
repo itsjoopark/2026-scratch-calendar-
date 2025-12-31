@@ -74,8 +74,11 @@ export default function Home() {
     <main 
       className="min-h-screen flex flex-col items-center justify-center overflow-hidden relative"
       style={{ 
-        // Figma background: #f0eee9
-        backgroundColor: '#f0eee9' 
+        backgroundImage: 'url(/assets/background-pattern.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#f5a88e', // Fallback color matching the image
       }}
     >
       {/* Three.js Canvas Container */}
