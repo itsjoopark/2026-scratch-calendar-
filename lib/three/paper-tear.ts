@@ -201,6 +201,8 @@ export class PaperTear {
       z-index: 9998;
       transform-origin: center top;
       filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+      will-change: transform, opacity;
+      transition: none;
     `;
     
     const ctx = canvas.getContext('2d')!;
@@ -252,11 +254,28 @@ export class PaperTear {
     // Store display size for positioning
     this.detachedDisplaySize = { width: displayWidth, height: displayHeight };
     
-    // Position at current drag location - center paper on cursor
-    this.detachedPosition = { 
-      x: this.dragCurrent.x - displayWidth / 2,
-      y: this.dragCurrent.y - displayHeight * 0.3
-    };
+    // Calculate position to match the Three.js mesh position exactly
+    // The mesh is positioned relative to the canvas center
+    if (this.canvasRect) {
+      const canvasCenterX = this.canvasRect.left + this.canvasRect.width / 2;
+      const canvasCenterY = this.canvasRect.top + this.canvasRect.height / 2;
+      
+      // Convert mesh position to screen coordinates
+      // Account for the pivot offset and current rotation
+      const offsetX = this.currentPosition.x * (this.canvasRect.width / 5); // Scale factor
+      const offsetY = -this.currentPosition.y * (this.canvasRect.height / 5);
+      
+      this.detachedPosition = { 
+        x: canvasCenterX - displayWidth / 2 + offsetX,
+        y: canvasCenterY - displayHeight / 2 + offsetY - displayHeight * 0.1
+      };
+    } else {
+      this.detachedPosition = { 
+        x: this.dragCurrent.x - displayWidth / 2,
+        y: this.dragCurrent.y - displayHeight * 0.3
+      };
+    }
+    
     this.detachedRotation = this.currentRotation.z;
     
     this.updateDetachedPaperTransform();
@@ -379,16 +398,19 @@ export class PaperTear {
     const prevY = this.dragCurrent.y;
     this.dragCurrent = { x: screenX, y: screenY };
     
-    // If detached, move the detached paper freely across the screen
+    // If detached, move the detached paper freely across the screen with smooth follow
     if (this.isDetached && this.detachedCanvas) {
       const dx = screenX - prevX;
       const dy = screenY - prevY;
-      this.detachedPosition.x += dx;
-      this.detachedPosition.y += dy;
       
-      // Subtle rotation based on horizontal movement
-      this.detachedRotation += dx * 0.002;
-      this.detachedRotation = Math.max(-0.5, Math.min(0.5, this.detachedRotation));
+      // Smooth position following (slight lag for natural feel)
+      this.detachedPosition.x += dx * 0.9;
+      this.detachedPosition.y += dy * 0.9;
+      
+      // Subtle rotation based on horizontal movement with smoothing
+      const targetRot = dx * 0.003;
+      this.detachedRotation += (targetRot - this.detachedRotation * 0.1);
+      this.detachedRotation = Math.max(-0.4, Math.min(0.4, this.detachedRotation));
       
       this.updateDetachedPaperTransform();
       return;
@@ -514,34 +536,40 @@ export class PaperTear {
       return;
     }
     
-    const gravity = 0.5;
-    const airResistance = 0.99;
+    // Smoother physics with gradual acceleration
+    const gravity = 0.35; // Gentler gravity
+    const airResistance = 0.985; // More air resistance for floatier feel
     
-    // Update velocity with gravity
-    this.fallVelocity.y += gravity;
+    // Update velocity with gravity (ease-in feel)
+    this.fallVelocity.y += gravity * (1 + this.fallTime * 0.5); // Accelerate over time
     
     // Apply air resistance
     this.fallVelocity.x *= airResistance;
+    this.fallVelocity.y *= 0.995; // Slight y resistance too
     
-    // Update position
+    // Update position smoothly
     this.detachedPosition.x += this.fallVelocity.x;
     this.detachedPosition.y += this.fallVelocity.y;
     
-    // Update rotation (tumbling)
-    this.detachedRotation += this.fallVelocity.rot;
+    // Gentle rotation (tumbling)
+    this.detachedRotation += this.fallVelocity.rot * 0.8;
+    // Dampen rotation over time
+    this.fallVelocity.rot *= 0.98;
     
-    // Fade out after a bit
+    // Smooth fade out with ease
     this.fallTime += 0.016;
-    const fadeStart = 0.5;
-    const fadeDuration = 1.0;
+    const fadeStart = 0.6;
+    const fadeDuration = 1.2;
     if (this.fallTime > fadeStart) {
-      this.material.opacity = Math.max(0, 1 - (this.fallTime - fadeStart) / fadeDuration);
+      const fadeProgress = (this.fallTime - fadeStart) / fadeDuration;
+      // Ease-out fade
+      this.material.opacity = Math.max(0, 1 - fadeProgress * fadeProgress);
     }
     
     this.updateDetachedPaperTransform();
     
     // Remove when off screen or faded
-    if (this.detachedPosition.y > window.innerHeight + 200 || this.fallTime > 2.0) {
+    if (this.detachedPosition.y > window.innerHeight + 200 || this.fallTime > 2.5) {
       this.removeDetachedPaper();
       this.prepareForNextTear();
       console.log('Fall animation complete - ready for next tear');
@@ -561,9 +589,9 @@ export class PaperTear {
   }
   
   private updateDragging(dt: number): void {
-    // Smooth interpolation toward target (spring-like feel)
-    const lerpSpeed = this.isDragging ? 12 : 8;
-    const t = Math.min(dt * lerpSpeed, 0.4);
+    // Smoother interpolation with ease-out curve
+    const baseSpeed = this.isDragging ? 8 : 5;
+    const t = 1 - Math.pow(1 - Math.min(dt * baseSpeed, 0.25), 2); // Quadratic ease-out
     
     this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * t;
     this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * t;
