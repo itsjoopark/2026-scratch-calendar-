@@ -114,9 +114,9 @@ export class Fireworks {
     // Add canvas to DOM
     document.body.appendChild(this.canvas);
     
-    // Fade in
+    // Fade in to 75% opacity (overlay effect - calendar still visible)
     requestAnimationFrame(() => {
-      this.canvas.style.opacity = '1';
+      this.canvas.style.opacity = '0.75';
     });
     
     // Start animation loop
