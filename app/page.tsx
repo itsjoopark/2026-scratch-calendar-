@@ -122,7 +122,7 @@ export default function Home() {
           <div 
             className="flex gap-4 justify-center"
             style={{ 
-              color: '#000000',
+              color: '#F0EEE9',
               fontFamily: "'Instrument Sans', system-ui, sans-serif"
             }}
           >
