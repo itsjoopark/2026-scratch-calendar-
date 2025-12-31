@@ -64,6 +64,9 @@ export class CalendarScene {
     this.container = container;
     this.dates = generateDates();
     
+    // Log all dates for debugging
+    console.log('Calendar dates:', this.dates.map(d => `${d.month} ${d.day}, ${d.year}`));
+    
     // Get container dimensions
     const width = container.clientWidth || 400;
     const height = container.clientHeight || 533;

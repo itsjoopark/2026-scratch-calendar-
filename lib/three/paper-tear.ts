@@ -256,8 +256,32 @@ export class PaperTear {
     this.material.map = this.texture;
     this.material.needsUpdate = true;
     
-    // Reset all state
-    this.resetState();
+    // DON'T reset state here - let the current animation finish
+    // State will be reset when falling animation completes
+  }
+  
+  /**
+   * Prepare for next tear after animation completes
+   */
+  private prepareForNextTear(): void {
+    this.currentRotation = { x: 0, y: 0, z: 0 };
+    this.currentPosition = { x: 0, y: 0 };
+    this.targetRotation = { x: 0, y: 0, z: 0 };
+    this.targetPosition = { x: 0, y: 0 };
+    this.velocityHistory = [];
+    this.material.opacity = 1;
+    
+    // Reset mesh transform
+    this.mesh.position.set(0, this.pivotOffset, 0.05);
+    this.mesh.rotation.set(0, 0, 0);
+    this.mesh.visible = true;
+    
+    // Reset interaction flags for next tear
+    this.isDragging = false;
+    this.isDetached = false;
+    this.isFalling = false;
+    this.fallTime = 0;
+    this.tearCompleted = false;
   }
   
   private resetState(): void {
@@ -267,6 +291,7 @@ export class PaperTear {
     this.targetPosition = { x: 0, y: 0 };
     this.isFalling = false;
     this.isDetached = false;
+    this.isDragging = false;
     this.fallTime = 0;
     this.tearCompleted = false;
     this.velocityHistory = [];
@@ -484,10 +509,8 @@ export class PaperTear {
     // Remove when off screen or faded
     if (this.detachedPosition.y > window.innerHeight + 200 || this.fallTime > 2.0) {
       this.removeDetachedPaper();
-      this.isFalling = false;
-      this.fallTime = 0;
-      this.resetState();
-      console.log('Fall animation complete');
+      this.prepareForNextTear();
+      console.log('Fall animation complete - ready for next tear');
       return;
     }
     
@@ -531,7 +554,8 @@ export class PaperTear {
   }
   
   isInteractive(): boolean {
-    return !this.isFalling && !this.isLocked;
+    // Not interactive while falling, detached (still animating), or locked
+    return !this.isFalling && !this.isDetached && !this.isLocked && !this.tearCompleted;
   }
   
   isDraggingDetached(): boolean {
