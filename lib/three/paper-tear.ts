@@ -166,6 +166,14 @@ export class PaperTear {
     ctx.textBaseline = 'top';
     ctx.fillText(date.month, width / 2, height * 0.63);
     
+    // Add "Happy New Year" text for January 1st
+    if (date.isNewYear) {
+      ctx.fillStyle = '#000000';
+      ctx.font = '400 56px "Imperial Script", "Great Vibes", "Dancing Script", cursive';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Happy New Year', width / 2, height * 0.72);
+    }
+    
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
@@ -248,6 +256,14 @@ export class PaperTear {
     ctx.font = '600 50px "Instrument Sans", system-ui, sans-serif';
     ctx.textBaseline = 'top';
     ctx.fillText(this.date.month, textureWidth / 2, textureHeight * 0.63);
+    
+    // Add "Happy New Year" text for January 1st
+    if (this.date.isNewYear) {
+      ctx.fillStyle = '#000000';
+      ctx.font = '400 56px "Imperial Script", "Great Vibes", "Dancing Script", cursive';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Happy New Year', textureWidth / 2, textureHeight * 0.72);
+    }
     
     document.body.appendChild(canvas);
     this.detachedCanvas = canvas;

@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "2026 Tear-Off Calendar | 新年カレンダー",
-  description: "Interactive Japanese-style tear-off calendar for New Year 2026. Drag to rip off pages and reveal the next day.",
-  keywords: ["calendar", "2026", "new year", "tear-off", "interactive", "japanese"],
-  authors: [{ name: "Calendar App" }],
+  title: "New Year 2026 Tear-Off Calendar",
+  description: "Interactive tear-off calendar for New Year 2026. Drag to rip off pages and reveal the next day.",
+  keywords: ["calendar", "2026", "new year", "tear-off", "interactive"],
+  authors: [{ name: "Jules Park" }],
   openGraph: {
-    title: "2026 Tear-Off Calendar",
+    title: "New Year 2026 Tear-Off Calendar",
     description: "Interactive tear-off calendar for New Year 2026",
     type: "website",
   },
@@ -31,6 +31,10 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link 
+          href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" 
+          rel="stylesheet" 
+        />
       </head>
       <body className="antialiased">
         {children}

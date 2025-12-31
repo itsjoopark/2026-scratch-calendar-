@@ -251,6 +251,14 @@ export class CalendarScene {
     ctx.textBaseline = 'top';
     ctx.fillText(date.month, width / 2, height * 0.63);
     
+    // Add "Happy New Year" text for January 1st
+    if (date.isNewYear) {
+      ctx.fillStyle = '#000000';
+      ctx.font = '400 56px "Imperial Script", "Great Vibes", "Dancing Script", cursive';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Happy New Year', width / 2, height * 0.72);
+    }
+    
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     

@@ -169,14 +169,27 @@ export default function Home() {
       
       {/* Footer */}
       <footer 
-        className="absolute bottom-4 text-center text-xs px-4"
+        className="absolute bottom-4 text-center px-4"
         style={{ 
           color: '#F0EEE9',
           opacity: 0.7,
-          fontFamily: "'Instrument Sans', system-ui, sans-serif"
+          fontFamily: "'Instrument Sans', system-ui, sans-serif",
+          fontSize: '17px'
         }}
       >
-        New Year 2026 Tear-Off Calendar
+        New Year 2026 Tear-Off Calendar | Made by{' '}
+        <a 
+          href="https://x.com/itsjulespark" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ 
+            color: '#F0EEE9',
+            textDecoration: 'underline',
+            textUnderlineOffset: '2px'
+          }}
+        >
+          Jules Park
+        </a>
       </footer>
     </main>
   );
