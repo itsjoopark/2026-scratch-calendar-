@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <main 
-      className="min-h-screen flex flex-col items-center justify-center overflow-hidden relative"
+      className="min-h-screen flex flex-col items-center justify-center overflow-hidden relative px-4 py-6 sm:px-6 sm:py-8"
       style={{ 
         backgroundImage: 'url(/assets/cfcd3b396bc0770852b310557ced54fe29291984.png)',
         backgroundSize: 'cover',
@@ -84,19 +84,20 @@ export default function Home() {
       {/* Three.js Canvas Container */}
       <div 
         ref={containerRef}
-        className="relative w-full max-w-[500px] aspect-[3/4] select-none"
+        className="relative w-full max-w-[90vw] sm:max-w-[500px] aspect-[3/4] select-none"
         style={{ 
-          maxHeight: 'calc(100vh - 180px)',
+          maxHeight: 'calc(100vh - 220px)',
           touchAction: 'none',
           zIndex: 10, // Above fireworks background
           filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.12))',
+          WebkitTapHighlightColor: 'transparent', // Remove tap highlight on mobile
         }}
-        aria-label="Drag to rip off the page"
+        aria-label="Touch and drag to rip off the page"
       />
       
       {/* Instructions */}
       <p 
-        className="mt-6 text-center text-base px-4"
+        className="mt-4 sm:mt-6 text-center text-sm sm:text-base px-4"
         style={{ 
           color: '#F0EEE9',
           opacity: 0.85,
@@ -105,14 +106,14 @@ export default function Home() {
           zIndex: 10,
         }}
       >
-        Drag to rip off the page
+        Touch & drag to rip off the page
       </p>
       
       {/* Countdown display */}
       {mounted && countdown.days >= 0 && (
-        <div className="mt-5 text-center" style={{ position: 'relative', zIndex: 10 }}>
+        <div className="mt-3 sm:mt-5 text-center" style={{ position: 'relative', zIndex: 10 }}>
           <p 
-            className="text-sm mb-2"
+            className="text-xs sm:text-sm mb-2"
             style={{ 
               color: '#F0EEE9',
               fontFamily: "'Instrument Sans', system-ui, sans-serif"
@@ -121,7 +122,7 @@ export default function Home() {
             Countdown to 2026
           </p>
           <div 
-            className="flex gap-4 justify-center"
+            className="flex gap-3 sm:gap-4 justify-center"
             style={{ 
               color: '#F0EEE9',
               fontFamily: "'Instrument Sans', system-ui, sans-serif"
@@ -129,39 +130,39 @@ export default function Home() {
           >
             <div className="flex flex-col items-center">
               <span 
-                className="text-2xl font-semibold" 
+                className="text-xl sm:text-2xl font-semibold" 
                 style={{ fontVariantNumeric: 'tabular-nums' }}
               >
                 {countdown.days}
               </span>
-              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>days</span>
+              <span className="text-[10px] sm:text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>days</span>
             </div>
             <div className="flex flex-col items-center">
               <span 
-                className="text-2xl font-semibold" 
+                className="text-xl sm:text-2xl font-semibold" 
                 style={{ fontVariantNumeric: 'tabular-nums' }}
               >
                 {String(countdown.hours).padStart(2, '0')}
               </span>
-              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>hours</span>
+              <span className="text-[10px] sm:text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>hours</span>
             </div>
             <div className="flex flex-col items-center">
               <span 
-                className="text-2xl font-semibold" 
+                className="text-xl sm:text-2xl font-semibold" 
                 style={{ fontVariantNumeric: 'tabular-nums' }}
               >
                 {String(countdown.minutes).padStart(2, '0')}
               </span>
-              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>min</span>
+              <span className="text-[10px] sm:text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>min</span>
             </div>
             <div className="flex flex-col items-center">
               <span 
-                className="text-2xl font-semibold" 
+                className="text-xl sm:text-2xl font-semibold" 
                 style={{ fontVariantNumeric: 'tabular-nums' }}
               >
                 {String(countdown.seconds).padStart(2, '0')}
               </span>
-              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>sec</span>
+              <span className="text-[10px] sm:text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>sec</span>
             </div>
           </div>
         </div>
@@ -169,12 +170,12 @@ export default function Home() {
       
       {/* Footer */}
       <footer 
-        className="absolute bottom-4 text-center px-4"
+        className="absolute bottom-3 sm:bottom-4 left-0 right-0 text-center px-4"
         style={{ 
           color: '#F0EEE9',
           opacity: 0.7,
           fontFamily: "'Instrument Sans', system-ui, sans-serif",
-          fontSize: '17px'
+          fontSize: 'clamp(11px, 3vw, 17px)'
         }}
       >
         New Year 2026 Tear-Off Calendar | Made by{' '}

@@ -372,12 +372,12 @@ export class CalendarScene {
   private handleTouchMove(event: TouchEvent): void {
     if (event.touches.length !== 1) return;
     
-    // Only prevent default if paper is being dragged (to allow normal scrolling otherwise)
-    if (this.paperTear.isPaperDetached() || this.paperTear.isDraggingDetached()) {
-      event.preventDefault();
-    }
-    
     const touch = event.touches[0];
+    
+    // Prevent default scrolling when interacting with the paper
+    // This ensures smooth drag experience on mobile
+    event.preventDefault();
+    
     this.paperTear.updateDrag(touch.clientX, touch.clientY);
   }
   
