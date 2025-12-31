@@ -1,12 +1,14 @@
 /**
  * SoundManager - Handles paper tear sound effects
  * Cycles through 7 tear sounds sequentially
+ * Includes mobile audio unlock support
  */
 
 export class SoundManager {
   private sounds: HTMLAudioElement[] = [];
   private currentIndex = 0;
   private isLoaded = false;
+  private isUnlocked = false;
   private loadPromise: Promise<void>;
   
   // Volume control (0.0 to 1.0)
@@ -14,6 +16,46 @@ export class SoundManager {
   
   constructor() {
     this.loadPromise = this.loadSounds();
+    this.setupMobileUnlock();
+  }
+  
+  /**
+   * Setup mobile audio unlock on first user interaction
+   * Mobile browsers require audio to be played in response to user gesture
+   */
+  private setupMobileUnlock(): void {
+    const unlockAudio = () => {
+      if (this.isUnlocked) return;
+      
+      // Try to play and immediately pause each sound to "unlock" them
+      this.sounds.forEach((audio) => {
+        // Create a short silent play to unlock
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+            })
+            .catch(() => {
+              // Ignore errors, this is just an unlock attempt
+            });
+        }
+      });
+      
+      this.isUnlocked = true;
+      console.log('SoundManager: Audio unlocked for mobile');
+      
+      // Remove listeners after unlock
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('touchend', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+    };
+    
+    // Listen for first user interaction
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('touchend', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
   }
   
   private async loadSounds(): Promise<void> {
@@ -26,13 +68,22 @@ export class SoundManager {
       audio.preload = 'auto';
       audio.volume = this.volume;
       
+      // iOS Safari needs these attributes
+      audio.setAttribute('playsinline', '');
+      audio.setAttribute('webkit-playsinline', '');
+      
       const loadPromise = new Promise<void>((resolve) => {
         audio.addEventListener('canplaythrough', () => resolve(), { once: true });
         audio.addEventListener('error', (e) => {
           console.warn(`Failed to load tear-sound-${i}.mp3:`, e);
           resolve(); // Don't reject, just skip this sound
         });
+        // Also resolve on loadeddata for mobile
+        audio.addEventListener('loadeddata', () => resolve(), { once: true });
       });
+      
+      // Trigger load
+      audio.load();
       
       loadPromises.push(loadPromise);
       this.sounds.push(audio);

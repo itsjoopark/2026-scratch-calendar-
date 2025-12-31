@@ -26,6 +26,7 @@ export class Fireworks {
   // Fireworks sound effect
   private sound: HTMLAudioElement | null = null;
   private soundLoaded = false;
+  private soundUnlocked = false;
   
   constructor() {
     // Create canvas
@@ -64,6 +65,9 @@ export class Fireworks {
     
     // Load fireworks sound effect
     this.loadSound();
+    
+    // Setup mobile audio unlock
+    this.setupMobileUnlock();
   }
   
   private loadSound(): void {
@@ -72,14 +76,59 @@ export class Fireworks {
     this.sound.volume = 0.6; // 60% volume
     this.sound.loop = false;
     
+    // iOS Safari needs these attributes
+    this.sound.setAttribute('playsinline', '');
+    this.sound.setAttribute('webkit-playsinline', '');
+    
     this.sound.addEventListener('canplaythrough', () => {
       this.soundLoaded = true;
       console.log('Fireworks sound loaded');
     }, { once: true });
     
+    this.sound.addEventListener('loadeddata', () => {
+      this.soundLoaded = true;
+    }, { once: true });
+    
     this.sound.addEventListener('error', (e) => {
       console.warn('Failed to load fireworks sound:', e);
     });
+    
+    // Trigger load
+    this.sound.load();
+  }
+  
+  /**
+   * Setup mobile audio unlock on first user interaction
+   */
+  private setupMobileUnlock(): void {
+    const unlockAudio = () => {
+      if (this.soundUnlocked || !this.sound) return;
+      
+      // Try to play and immediately pause to "unlock"
+      const playPromise = this.sound.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            this.sound?.pause();
+            if (this.sound) this.sound.currentTime = 0;
+            this.soundUnlocked = true;
+            console.log('Fireworks sound unlocked for mobile');
+          })
+          .catch(() => {
+            // Ignore errors, this is just an unlock attempt
+          });
+      }
+      
+      // Remove listeners after unlock
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('touchend', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+    };
+    
+    // Listen for first user interaction
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('touchend', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
   }
   
   private handleResize = (): void => {
