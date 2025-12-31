@@ -12,6 +12,7 @@ export interface PaperTearOptions {
   height: number;
   segments: number;
   onTearComplete: () => void;
+  onFallComplete?: () => void; // Called when falling animation finishes
 }
 
 /**
@@ -335,6 +336,11 @@ export class PaperTear {
     this.isFalling = false;
     this.fallTime = 0;
     this.tearCompleted = false;
+    
+    // Notify that fall animation is complete (safe to update background now)
+    if (this.options.onFallComplete) {
+      this.options.onFallComplete();
+    }
   }
   
   private resetState(): void {

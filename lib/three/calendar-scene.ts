@@ -124,6 +124,7 @@ export class CalendarScene {
         height: this.paperHeight,
         segments: 64,
         onTearComplete: () => this.handleTearComplete(),
+        onFallComplete: () => this.handleFallComplete(),
       }
     );
     
@@ -411,12 +412,9 @@ export class CalendarScene {
       }, 300);
     }
     
-    // Update background for next date
-    if (this.currentIndex + 1 < this.dates.length) {
-      this.updateBackgroundPage(this.dates[this.currentIndex + 1]);
-    }
-    
-    // Update paper
+    // Update paper to show the new current date (revealed underneath)
+    // DON'T update background yet - wait for fall animation to complete
+    // This prevents the "two layers deep" flicker
     this.paperTear.updateDate(currentDate);
     
     // Lock if final page
@@ -432,6 +430,15 @@ export class CalendarScene {
     }
     
     console.log('Date changed to:', currentDate.month, currentDate.day, currentDate.year);
+  }
+  
+  private handleFallComplete(): void {
+    // Now safe to update background for the NEXT date
+    // This happens after the falling paper animation is done
+    if (this.currentIndex + 1 < this.dates.length) {
+      this.updateBackgroundPage(this.dates[this.currentIndex + 1]);
+      console.log('Background updated to:', this.dates[this.currentIndex + 1].month, this.dates[this.currentIndex + 1].day);
+    }
   }
   
   private animate = (): void => {
