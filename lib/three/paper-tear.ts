@@ -172,16 +172,30 @@ export class PaperTear {
   
   /**
    * Create a detached paper element that can be dragged across the entire screen
+   * Size matches the actual Three.js paper as it appears on screen
    */
   private createDetachedPaper(): void {
+    // Calculate paper size based on canvas rect (matches Three.js render size)
+    // The paper takes up about 60% of the canvas width
+    let paperWidth = 280;
+    let paperHeight = 373;
+    
+    if (this.canvasRect) {
+      // Paper is about 75% of canvas width, with 3:4 aspect ratio
+      paperWidth = this.canvasRect.width * 0.75;
+      paperHeight = paperWidth * (4 / 3);
+    }
+    
     // Create a canvas element for the detached paper
     const canvas = document.createElement('canvas');
-    const paperWidth = 250; // Screen size
-    const paperHeight = 333;
-    canvas.width = paperWidth;
-    canvas.height = paperHeight;
+    // Use higher resolution for crisp rendering
+    const dpr = Math.min(window.devicePixelRatio, 2);
+    canvas.width = paperWidth * dpr;
+    canvas.height = paperHeight * dpr;
     canvas.style.cssText = `
       position: fixed;
+      width: ${paperWidth}px;
+      height: ${paperHeight}px;
       pointer-events: none;
       z-index: 9998;
       transform-origin: center top;
@@ -189,6 +203,7 @@ export class PaperTear {
     `;
     
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(dpr, dpr);
     
     // Draw paper background
     if (this.paperTextureImage) {
@@ -198,33 +213,33 @@ export class PaperTear {
       ctx.fillRect(0, 0, paperWidth, paperHeight);
     }
     
-    // Draw text
+    // Draw text - scale based on paper size
     const scale = paperWidth / 900;
     const contentTop = paperHeight * 0.268;
     
     ctx.fillStyle = '#2b79ff';
-    ctx.font = `400 ${Math.round(50 * scale)}px "Instrument Sans", system-ui, sans-serif`;
+    ctx.font = `400 ${Math.round(50 / scale * 0.28)}px "Instrument Sans", system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(String(this.date.year), paperWidth / 2, contentTop - 100 * scale);
+    ctx.fillText(String(this.date.year), paperWidth / 2, contentTop - paperHeight * 0.08);
     
     ctx.fillStyle = '#000000';
-    ctx.font = `italic ${Math.round(400 * scale)}px "Instrument Serif", Georgia, serif`;
+    ctx.font = `italic ${Math.round(400 / scale * 0.28)}px "Instrument Serif", Georgia, serif`;
     ctx.textBaseline = 'middle';
     ctx.fillText(String(this.date.day), paperWidth / 2, paperHeight * 0.47);
     
     ctx.fillStyle = '#2b79ff';
-    ctx.font = `600 ${Math.round(50 * scale)}px "Instrument Sans", system-ui, sans-serif`;
+    ctx.font = `600 ${Math.round(50 / scale * 0.28)}px "Instrument Sans", system-ui, sans-serif`;
     ctx.textBaseline = 'top';
     ctx.fillText(this.date.month, paperWidth / 2, paperHeight * 0.63);
     
     document.body.appendChild(canvas);
     this.detachedCanvas = canvas;
     
-    // Position at current drag location
+    // Position at current drag location - center paper on cursor
     this.detachedPosition = { 
       x: this.dragCurrent.x - paperWidth / 2,
-      y: this.dragCurrent.y - paperHeight * 0.1 // Offset so cursor is near top
+      y: this.dragCurrent.y - paperHeight * 0.3 // Offset so cursor is near middle-top
     };
     this.detachedRotation = this.currentRotation.z;
     
@@ -256,8 +271,11 @@ export class PaperTear {
     this.material.map = this.texture;
     this.material.needsUpdate = true;
     
-    // DON'T reset state here - let the current animation finish
-    // State will be reset when falling animation completes
+    // Make the mesh visible again with the new date
+    // This shows the NEXT date underneath the detached paper that's falling
+    this.mesh.visible = true;
+    this.mesh.position.set(0, this.pivotOffset, 0.05);
+    this.mesh.rotation.set(0, 0, 0);
   }
   
   /**
