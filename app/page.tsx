@@ -97,8 +97,8 @@ export default function Home() {
       <p 
         className="mt-6 text-center text-base px-4"
         style={{ 
-          color: '#666666',
-          opacity: 0.7,
+          color: '#F0EEE9',
+          opacity: 0.85,
           fontFamily: "'Instrument Sans', system-ui, sans-serif",
           position: 'relative',
           zIndex: 10,
@@ -113,7 +113,7 @@ export default function Home() {
           <p 
             className="text-sm mb-2"
             style={{ 
-              color: '#999',
+              color: '#F0EEE9',
               fontFamily: "'Instrument Sans', system-ui, sans-serif"
             }}
           >
@@ -122,7 +122,7 @@ export default function Home() {
           <div 
             className="flex gap-4 justify-center"
             style={{ 
-              color: '#2b79ff',
+              color: '#F0EEE9',
               fontFamily: "'Instrument Sans', system-ui, sans-serif"
             }}
           >
@@ -133,7 +133,7 @@ export default function Home() {
               >
                 {countdown.days}
               </span>
-              <span className="text-xs" style={{ color: '#999' }}>days</span>
+              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>days</span>
             </div>
             <div className="flex flex-col items-center">
               <span 
@@ -142,7 +142,7 @@ export default function Home() {
               >
                 {String(countdown.hours).padStart(2, '0')}
               </span>
-              <span className="text-xs" style={{ color: '#999' }}>hours</span>
+              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>hours</span>
             </div>
             <div className="flex flex-col items-center">
               <span 
@@ -151,7 +151,7 @@ export default function Home() {
               >
                 {String(countdown.minutes).padStart(2, '0')}
               </span>
-              <span className="text-xs" style={{ color: '#999' }}>min</span>
+              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>min</span>
             </div>
             <div className="flex flex-col items-center">
               <span 
@@ -160,7 +160,7 @@ export default function Home() {
               >
                 {String(countdown.seconds).padStart(2, '0')}
               </span>
-              <span className="text-xs" style={{ color: '#999' }}>sec</span>
+              <span className="text-xs" style={{ color: '#F0EEE9', opacity: 0.8 }}>sec</span>
             </div>
           </div>
         </div>
@@ -170,7 +170,8 @@ export default function Home() {
       <footer 
         className="absolute bottom-4 text-center text-xs px-4"
         style={{ 
-          color: '#bbb',
+          color: '#F0EEE9',
+          opacity: 0.7,
           fontFamily: "'Instrument Sans', system-ui, sans-serif"
         }}
       >
