@@ -288,24 +288,22 @@ export class CalendarScene {
       e.preventDefault();
       this.handleMouseDown(e);
     });
-    canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-    canvas.addEventListener('mouseup', () => this.handleMouseUp());
-    canvas.addEventListener('mouseleave', () => this.handleMouseUp());
     
-    // Also listen on window for mousemove/mouseup to handle drag outside canvas
+    // Listen on window for mouse events to support full-screen dragging
     window.addEventListener('mousemove', (e) => this.handleMouseMove(e));
     window.addEventListener('mouseup', () => this.handleMouseUp());
     
+    // Touch events
     canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-    canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-    canvas.addEventListener('touchend', () => this.handleTouchEnd());
-    canvas.addEventListener('touchcancel', () => this.handleTouchEnd());
+    window.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+    window.addEventListener('touchend', () => this.handleTouchEnd());
+    window.addEventListener('touchcancel', () => this.handleTouchEnd());
     
     window.addEventListener('resize', () => this.handleResize());
     
     canvas.style.cursor = 'grab';
     
-    console.log('Event listeners attached to canvas:', canvas.tagName, canvas.width, canvas.height);
+    console.log('Event listeners attached - supports full-screen dragging');
   }
   
   private updateMousePosition(clientX: number, clientY: number): void {
@@ -330,8 +328,8 @@ export class CalendarScene {
   private handleMouseMove(event: MouseEvent): void {
     this.paperTear.updateDrag(event.clientX, event.clientY);
     
-    // Update cursor when dragging detached paper
-    if (this.paperTear.isDraggingDetached()) {
+    // Update cursor when dragging detached paper (full-screen)
+    if (this.paperTear.isDraggingDetached() || this.paperTear.isPaperDetached()) {
       document.body.style.cursor = 'grabbing';
     }
   }
@@ -355,7 +353,11 @@ export class CalendarScene {
   
   private handleTouchMove(event: TouchEvent): void {
     if (event.touches.length !== 1) return;
-    event.preventDefault();
+    
+    // Only prevent default if paper is being dragged (to allow normal scrolling otherwise)
+    if (this.paperTear.isPaperDetached() || this.paperTear.isDraggingDetached()) {
+      event.preventDefault();
+    }
     
     const touch = event.touches[0];
     this.paperTear.updateDrag(touch.clientX, touch.clientY);

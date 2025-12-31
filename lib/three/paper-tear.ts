@@ -17,6 +17,7 @@ export interface PaperTearOptions {
 /**
  * PaperTear - Simulates paper peel/tear interaction
  * Based on Figma flow: paper pivots from top edge, rotates and translates with drag
+ * Supports full-screen dragging after detachment
  */
 export class PaperTear {
   private mesh: THREE.Mesh;
@@ -24,6 +25,12 @@ export class PaperTear {
   private material: THREE.MeshBasicMaterial;
   private texture: THREE.CanvasTexture;
   private paperTextureImage: HTMLImageElement | null = null;
+  
+  // Detached paper (full-screen draggable)
+  private detachedCanvas: HTMLCanvasElement | null = null;
+  private isDetached = false;
+  private detachedPosition = { x: 0, y: 0 };
+  private detachedRotation = 0;
   
   // Interaction state
   private isDragging = false;
@@ -52,13 +59,16 @@ export class PaperTear {
   // Pivot point (top center of paper, near binding)
   private pivotOffset: number;
   
+  // Canvas rect for coordinate conversion
+  private canvasRect: DOMRect | null = null;
+  
   private options: PaperTearOptions;
   private date: CalendarDate;
   private scene: THREE.Scene;
   private camera: THREE.Camera;
-  private canvasRect: DOMRect | null = null;
   
   private clock = new THREE.Clock();
+  private animationId: number | null = null;
   
   constructor(scene: THREE.Scene, camera: THREE.Camera, date: CalendarDate, options: PaperTearOptions) {
     this.scene = scene;
@@ -160,6 +170,85 @@ export class PaperTear {
     return texture;
   }
   
+  /**
+   * Create a detached paper element that can be dragged across the entire screen
+   */
+  private createDetachedPaper(): void {
+    // Create a canvas element for the detached paper
+    const canvas = document.createElement('canvas');
+    const paperWidth = 250; // Screen size
+    const paperHeight = 333;
+    canvas.width = paperWidth;
+    canvas.height = paperHeight;
+    canvas.style.cssText = `
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      transform-origin: center top;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+    `;
+    
+    const ctx = canvas.getContext('2d')!;
+    
+    // Draw paper background
+    if (this.paperTextureImage) {
+      ctx.drawImage(this.paperTextureImage, 0, 0, paperWidth, paperHeight);
+    } else {
+      ctx.fillStyle = '#fafaf8';
+      ctx.fillRect(0, 0, paperWidth, paperHeight);
+    }
+    
+    // Draw text
+    const scale = paperWidth / 900;
+    const contentTop = paperHeight * 0.268;
+    
+    ctx.fillStyle = '#2b79ff';
+    ctx.font = `400 ${Math.round(50 * scale)}px "Instrument Sans", system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(String(this.date.year), paperWidth / 2, contentTop - 100 * scale);
+    
+    ctx.fillStyle = '#000000';
+    ctx.font = `italic ${Math.round(400 * scale)}px "Instrument Serif", Georgia, serif`;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(this.date.day), paperWidth / 2, paperHeight * 0.47);
+    
+    ctx.fillStyle = '#2b79ff';
+    ctx.font = `600 ${Math.round(50 * scale)}px "Instrument Sans", system-ui, sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.fillText(this.date.month, paperWidth / 2, paperHeight * 0.63);
+    
+    document.body.appendChild(canvas);
+    this.detachedCanvas = canvas;
+    
+    // Position at current drag location
+    this.detachedPosition = { 
+      x: this.dragCurrent.x - paperWidth / 2,
+      y: this.dragCurrent.y - paperHeight * 0.1 // Offset so cursor is near top
+    };
+    this.detachedRotation = this.currentRotation.z;
+    
+    this.updateDetachedPaperTransform();
+  }
+  
+  private updateDetachedPaperTransform(): void {
+    if (!this.detachedCanvas) return;
+    
+    const rotDeg = (this.detachedRotation * 180 / Math.PI);
+    this.detachedCanvas.style.left = `${this.detachedPosition.x}px`;
+    this.detachedCanvas.style.top = `${this.detachedPosition.y}px`;
+    this.detachedCanvas.style.transform = `rotate(${rotDeg}deg)`;
+    this.detachedCanvas.style.opacity = this.material.opacity.toString();
+  }
+  
+  private removeDetachedPaper(): void {
+    if (this.detachedCanvas && this.detachedCanvas.parentNode) {
+      this.detachedCanvas.parentNode.removeChild(this.detachedCanvas);
+    }
+    this.detachedCanvas = null;
+    this.isDetached = false;
+  }
+  
   updateDate(date: CalendarDate): void {
     this.date = date;
     this.texture.dispose();
@@ -177,10 +266,14 @@ export class PaperTear {
     this.targetRotation = { x: 0, y: 0, z: 0 };
     this.targetPosition = { x: 0, y: 0 };
     this.isFalling = false;
+    this.isDetached = false;
     this.fallTime = 0;
     this.tearCompleted = false;
     this.velocityHistory = [];
     this.material.opacity = 1;
+    
+    // Remove detached paper if exists
+    this.removeDetachedPaper();
     
     // Reset mesh transform
     this.mesh.position.set(0, this.pivotOffset, 0.05);
@@ -190,6 +283,14 @@ export class PaperTear {
   
   startDrag(screenX: number, screenY: number, canvasRect: DOMRect): void {
     if (this.isFalling || this.isLocked) return;
+    
+    // If detached, continue dragging the detached paper
+    if (this.isDetached) {
+      this.isDragging = true;
+      this.dragCurrent = { x: screenX, y: screenY };
+      this.velocityHistory = [];
+      return;
+    }
     
     this.canvasRect = canvasRect;
     this.isDragging = true;
@@ -215,9 +316,26 @@ export class PaperTear {
       this.velocityHistory.shift();
     }
     
+    const prevX = this.dragCurrent.x;
+    const prevY = this.dragCurrent.y;
     this.dragCurrent = { x: screenX, y: screenY };
     
-    // Calculate drag delta
+    // If detached, move the detached paper freely across the screen
+    if (this.isDetached && this.detachedCanvas) {
+      const dx = screenX - prevX;
+      const dy = screenY - prevY;
+      this.detachedPosition.x += dx;
+      this.detachedPosition.y += dy;
+      
+      // Subtle rotation based on horizontal movement
+      this.detachedRotation += dx * 0.002;
+      this.detachedRotation = Math.max(-0.5, Math.min(0.5, this.detachedRotation));
+      
+      this.updateDetachedPaperTransform();
+      return;
+    }
+    
+    // Calculate drag delta for attached paper
     const dragX = screenX - this.dragStart.x;
     const dragY = screenY - this.dragStart.y;
     const dragDistance = Math.sqrt(dragX * dragX + dragY * dragY);
@@ -225,25 +343,41 @@ export class PaperTear {
     // Normalize drag to a 0-1 range (full peel at ~200px drag)
     const dragProgress = Math.min(1, dragDistance / 200);
     
-    // Calculate rotation based on drag direction and distance
-    // Paper rotates around X-axis (tilts forward/back) and Z-axis (rotates left/right)
-    
     // X rotation: paper tilts forward as you drag down/away
-    // Range: 0 to ~60 degrees
     this.targetRotation.x = dragProgress * Math.PI * 0.35;
     
     // Z rotation: paper rotates based on horizontal drag direction
-    // Range: -45 to +45 degrees based on drag direction
     this.targetRotation.z = (dragX / 300) * Math.PI * 0.25;
     
     // Y rotation: slight twist
     this.targetRotation.y = (dragX / 400) * Math.PI * 0.1;
     
     // Position offset: paper moves with the drag
-    // Scale factor converts screen pixels to world units (approximate)
     const scaleFactor = 0.008;
     this.targetPosition.x = dragX * scaleFactor;
-    this.targetPosition.y = -dragY * scaleFactor * 0.3; // Less Y movement
+    this.targetPosition.y = -dragY * scaleFactor * 0.3;
+    
+    // Detach paper at threshold (but don't drop - user is still holding)
+    if (dragProgress > 0.6 && !this.isDetached) {
+      this.detachPaper();
+    }
+  }
+  
+  private detachPaper(): void {
+    console.log('Paper detached - now draggable across entire screen');
+    
+    // Hide the Three.js mesh
+    this.mesh.visible = false;
+    
+    // Create the full-screen draggable paper
+    this.createDetachedPaper();
+    this.isDetached = true;
+    
+    // Trigger completion callback
+    if (!this.tearCompleted) {
+      this.tearCompleted = true;
+      this.options.onTearComplete();
+    }
   }
   
   endDrag(): void {
@@ -251,6 +385,12 @@ export class PaperTear {
     this.isDragging = false;
     
     this.calculateReleaseVelocity();
+    
+    // If detached, start falling
+    if (this.isDetached) {
+      this.startFalling();
+      return;
+    }
     
     // Calculate how much the paper was pulled
     const dragX = this.dragCurrent.x - this.dragStart.x;
@@ -260,7 +400,9 @@ export class PaperTear {
     
     // If dragged enough (>40%), tear off and fall
     if (dragProgress > 0.4) {
-      this.startFalling();
+      this.detachPaper();
+      // Start falling after a tiny delay
+      setTimeout(() => this.startFalling(), 50);
     } else {
       // Snap back to original position
       this.targetRotation = { x: 0, y: 0, z: 0 };
@@ -293,26 +435,70 @@ export class PaperTear {
     this.isFalling = true;
     this.fallTime = 0;
     
-    // Trigger completion callback
-    if (!this.tearCompleted) {
-      this.tearCompleted = true;
-      this.options.onTearComplete();
-    }
-    
     // Set initial fall velocity based on release momentum
     this.fallVelocity = {
-      x: this.releaseVelocity.x * 0.015 + (Math.random() - 0.5) * 0.02,
-      y: this.releaseVelocity.y * 0.01,
-      rot: (Math.random() - 0.5) * 2 // Random rotation speed
+      x: this.releaseVelocity.x * 0.8 + (Math.random() - 0.5) * 2,
+      y: this.releaseVelocity.y * 0.5 + 2, // Initial downward velocity
+      rot: (Math.random() - 0.5) * 0.1 // Random rotation speed
     };
+    
+    // Start fall animation for detached paper
+    if (this.isDetached) {
+      this.animateFallingDetached();
+    }
+  }
+  
+  private animateFallingDetached(): void {
+    if (!this.isFalling || !this.detachedCanvas) {
+      this.removeDetachedPaper();
+      this.isFalling = false;
+      return;
+    }
+    
+    const gravity = 0.5;
+    const airResistance = 0.99;
+    
+    // Update velocity with gravity
+    this.fallVelocity.y += gravity;
+    
+    // Apply air resistance
+    this.fallVelocity.x *= airResistance;
+    
+    // Update position
+    this.detachedPosition.x += this.fallVelocity.x;
+    this.detachedPosition.y += this.fallVelocity.y;
+    
+    // Update rotation (tumbling)
+    this.detachedRotation += this.fallVelocity.rot;
+    
+    // Fade out after a bit
+    this.fallTime += 0.016;
+    const fadeStart = 0.5;
+    const fadeDuration = 1.0;
+    if (this.fallTime > fadeStart) {
+      this.material.opacity = Math.max(0, 1 - (this.fallTime - fadeStart) / fadeDuration);
+    }
+    
+    this.updateDetachedPaperTransform();
+    
+    // Remove when off screen or faded
+    if (this.detachedPosition.y > window.innerHeight + 200 || this.fallTime > 2.0) {
+      this.removeDetachedPaper();
+      this.isFalling = false;
+      this.fallTime = 0;
+      this.resetState();
+      console.log('Fall animation complete');
+      return;
+    }
+    
+    this.animationId = requestAnimationFrame(() => this.animateFallingDetached());
   }
   
   update(): void {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     
-    if (this.isFalling) {
-      this.updateFalling(dt);
-    } else {
+    // Only update Three.js mesh when not detached
+    if (!this.isDetached && !this.isFalling) {
       this.updateDragging(dt);
     }
   }
@@ -336,51 +522,6 @@ export class PaperTear {
     this.mesh.position.y = this.pivotOffset + this.currentPosition.y;
   }
   
-  private updateFalling(dt: number): void {
-    this.fallTime += dt;
-    
-    // Apply gravity and momentum
-    const gravity = 6.0;
-    const airResistance = 0.98;
-    
-    // Update velocity with gravity
-    this.fallVelocity.y += gravity * dt;
-    
-    // Apply air resistance
-    this.fallVelocity.x *= airResistance;
-    this.fallVelocity.y *= airResistance;
-    
-    // Update position
-    this.currentPosition.x += this.fallVelocity.x;
-    this.currentPosition.y -= this.fallVelocity.y * dt * 60; // Convert to per-frame
-    
-    // Update rotation (tumbling)
-    this.currentRotation.z += this.fallVelocity.rot * dt;
-    this.currentRotation.x += dt * 2; // Continue tilting forward
-    
-    // Apply to mesh
-    this.mesh.position.x = this.currentPosition.x;
-    this.mesh.position.y = this.pivotOffset + this.currentPosition.y;
-    this.mesh.rotation.x = this.currentRotation.x;
-    this.mesh.rotation.y = this.currentRotation.y;
-    this.mesh.rotation.z = this.currentRotation.z;
-    
-    // Fade out
-    const fadeStart = 0.8;
-    const fadeDuration = 1.5;
-    if (this.fallTime > fadeStart) {
-      this.material.opacity = Math.max(0, 1 - (this.fallTime - fadeStart) / fadeDuration);
-    }
-    
-    // Remove when done (off screen or faded)
-    if (this.fallTime > 2.5 || this.currentPosition.y < -5) {
-      this.isFalling = false;
-      this.fallTime = 0;
-      this.resetState();
-      console.log('Fall animation complete');
-    }
-  }
-  
   intersects(raycaster: THREE.Raycaster): boolean {
     return raycaster.intersectObject(this.mesh).length > 0;
   }
@@ -394,7 +535,11 @@ export class PaperTear {
   }
   
   isDraggingDetached(): boolean {
-    return false; // Not using detached mesh anymore
+    return this.isDetached && this.isDragging;
+  }
+  
+  isPaperDetached(): boolean {
+    return this.isDetached;
   }
   
   lock(): void {
@@ -410,6 +555,11 @@ export class PaperTear {
   }
   
   dispose(): void {
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+    
+    this.removeDetachedPaper();
     this.geometry.dispose();
     this.material.dispose();
     this.texture.dispose();
