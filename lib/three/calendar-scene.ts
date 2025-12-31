@@ -19,7 +19,7 @@ function generateDates(): CalendarDate[] {
   const startDate = new Date(2025, 11, 25); // Dec 25, 2025
   const endDate = new Date(2026, 0, 1); // Jan 1, 2026
   
-  let currentDate = new Date(startDate);
+  const currentDate = new Date(startDate);
   while (currentDate <= endDate) {
     dates.push({
       year: currentDate.getFullYear(),

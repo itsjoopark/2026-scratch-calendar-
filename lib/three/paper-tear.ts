@@ -314,7 +314,6 @@ export class PaperTear {
     if (!this.isDragging) return;
     
     const now = performance.now();
-    const dt = (now - this.lastTime) / 1000;
     this.lastTime = now;
     
     // Track velocity

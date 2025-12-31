@@ -30,7 +30,7 @@ function getCountdownToNewYear(): { days: number; hours: number; minutes: number
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CalendarScene | null>(null);
-  const [currentDate, setCurrentDate] = useState<CalendarDate | null>(null);
+  const [, setCurrentDate] = useState<CalendarDate | null>(null);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [mounted, setMounted] = useState(false);
 
